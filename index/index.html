@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Realtime Firebase App</title>
+</head>
+<body>
+
+<h2>Посты</h2>
+
+<input id="message" placeholder="Введите имя">
+<input id="email" placeholder="Введите email">
+<button onclick="addPost()">Отправить</button>
+
+<ul id="posts"></ul>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { 
+  getFirestore, collection, addDoc, 
+  onSnapshot, query, orderBy, 
+  updateDoc, doc, increment 
+} from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  // ВСТАВЬТЕ СВОЙ CONFIG ЗДЕСЬ
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+// Добавление нового поста
+async function addPost() {
+  const name = document.getElementById("message").value.trim();
+  const email = document.getElementById("email").value.trim();
+
+  if(name.length <= 2) {
+    alert("Имя должно быть больше 2 символов");
+    return;
+  }
+  if(!email.includes("@")) {
+    alert("Введите корректный email");
+    return;
+  }
+
+  await addDoc(collection(db, "requests"), {
+    name: name,
+    email: email,
+    likes: 0,
+    timestamp: Date.now()
+  });
+
+  document.getElementById("message").value = "";
+  document.getElementById("email").value = "";
+}
+
+// Увеличение лайка (атомарно)
+async function likePost(id) {
+  const ref = doc(db, "requests", id);
+  await updateDoc(ref, {
+    likes: increment(1)
+  });
+}
+
+// Реактивное обновление
+const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
+
+onSnapshot(q, (snapshot) => {
+  const list = document.getElementById("posts");
+  list.innerHTML = "";
+
+  snapshot.forEach(docSnap => {
+    const data = docSnap.data();
+
+    const li = document.createElement("li");
+    li.innerHTML = `
+      <b>${data.name}</b> (${data.email}) ❤️ ${data.likes}
+      <button onclick="likePost('${docSnap.id}')">Like</button>
+    `;
+    list.appendChild(li);
+  });
+});
+
+window.addPost = addPost;
+window.likePost = likePost;
+
+</script>
+
+</body>
+</html>
