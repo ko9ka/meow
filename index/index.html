@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Purple Insta App</title>
+<title>Purple Instagram</title>
 
 <style>
 body {
@@ -15,7 +15,7 @@ body {
     margin: 0;
 }
 
-/* AUTH */
+/* CONTAINER */
 .container {
     width: 100%;
     max-width: 500px;
@@ -24,10 +24,9 @@ body {
     margin-top: 12px;
     border-radius: 16px;
     box-shadow: 0 8px 20px rgba(120, 80, 180, 0.15);
-    border: 1px solid #efe6ff;
 }
 
-/* INPUTS */
+/* INPUT */
 input {
     width: 100%;
     padding: 12px;
@@ -35,12 +34,6 @@ input {
     border: 1px solid #e2d6ff;
     border-radius: 10px;
     background: #faf7ff;
-    outline: none;
-}
-
-input:focus {
-    border-color: #a56bff;
-    box-shadow: 0 0 0 3px rgba(165, 107, 255, 0.15);
 }
 
 /* BUTTON */
@@ -54,11 +47,6 @@ button {
     border-radius: 12px;
     font-weight: bold;
     cursor: pointer;
-    transition: 0.2s;
-}
-
-button:hover {
-    transform: scale(1.02);
 }
 
 /* POST */
@@ -68,10 +56,8 @@ button:hover {
     margin-top: 15px;
     border-radius: 18px;
     box-shadow: 0 6px 18px rgba(120, 80, 180, 0.12);
-    border: 1px solid #f0e8ff;
 }
 
-/* HEADER */
 .post-header {
     display: flex;
     align-items: center;
@@ -82,11 +68,10 @@ button:hover {
     width: 42px;
     height: 42px;
     border-radius: 50%;
-    border: 2px solid #a56bff;
     object-fit: cover;
+    border: 2px solid #a56bff;
 }
 
-/* LIKE */
 .like-btn {
     margin-top: 10px;
     padding: 6px 12px;
@@ -97,19 +82,13 @@ button:hover {
     cursor: pointer;
 }
 
-.like-btn:hover {
-    background: #e7dcff;
-}
-
-/* TEXT */
-p {
-    color: #3a2b55;
-}
-
-/* TIME */
 .time {
     font-size: 11px;
     color: #8b7aa8;
+}
+
+p {
+    color: #3a2b55;
 }
 </style>
 </head>
@@ -117,7 +96,7 @@ p {
 <body>
 
 <!-- LOGIN -->
-<div class="container" id="authBox">
+<div class="container">
     <button id="loginBtn">💜 Войти через Google</button>
 
     <div id="userBox" style="display:none;">
@@ -129,7 +108,7 @@ p {
 <!-- POST -->
 <div class="container" id="postBox" style="display:none;">
     <input id="content" placeholder="Что нового? 💭">
-    <input id="imageUrl" placeholder="Ссылка на картинку (необязательно) 🖼">
+    <input id="imageUrl" placeholder="Ссылка на картинку 🖼">
     <button id="postBtn">Опубликовать ✨</button>
 </div>
 
@@ -139,13 +118,13 @@ p {
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.0/firebase-app.js";
-import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment }
+import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, updateDoc, doc, increment, getDocs }
 from "https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore.js";
 
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
 from "https://www.gstatic.com/firebasejs/10.7.0/firebase-auth.js";
 
-/* 🔥 ВСТАВЬ СЮДА СВОЙ FIREBASE */
+/* 🔥 FIREBASE CONFIG */
 const firebaseConfig = {
     apiKey: "YOUR_API_KEY",
     authDomain: "YOUR_AUTH_DOMAIN",
@@ -161,7 +140,7 @@ const provider = new GoogleAuthProvider();
 document.getElementById("loginBtn").onclick = () => signInWithPopup(auth, provider);
 document.getElementById("logoutBtn").onclick = () => signOut(auth);
 
-/* AUTH STATE */
+/* AUTH */
 onAuthStateChanged(auth, (user) => {
     if (user) {
         document.getElementById("userBox").style.display = "block";
@@ -200,6 +179,52 @@ window.likePost = async (id) => {
     });
 };
 
+/* 🔥 ДЕМО ПОСТЫ (1 РАЗ) */
+async function createDemoPostsIfEmpty() {
+    const snap = await getDocs(collection(db, "requests"));
+    if (!snap.empty) return;
+
+    const demoPosts = [
+        {
+            name: "💜 Aesthetic Girl",
+            photo: "https://i.pravatar.cc/150?img=47",
+            text: "Purple vibes only ✨",
+            image: "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
+            likes: 12
+        },
+        {
+            name: "🌸 Dream Life",
+            photo: "https://i.pravatar.cc/150?img=5",
+            text: "Soft aesthetic 🌙",
+            image: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e",
+            likes: 24
+        },
+        {
+            name: "🪻 Night Mood",
+            photo: "https://i.pravatar.cc/150?img=12",
+            text: "Late night vibes 💭",
+            image: "https://images.unsplash.com/photo-1519681393784-d120267933ba",
+            likes: 8
+        },
+        {
+            name: "✨ Minimal Girl",
+            photo: "https://i.pravatar.cc/150?img=32",
+            text: "Less is more 🤍",
+            image: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1",
+            likes: 15
+        }
+    ];
+
+    for (let p of demoPosts) {
+        await addDoc(collection(db, "requests"), {
+            ...p,
+            timestamp: serverTimestamp()
+        });
+    }
+}
+
+createDemoPostsIfEmpty();
+
 /* FEED */
 const q = query(collection(db, "requests"), orderBy("timestamp", "desc"));
 
@@ -224,7 +249,7 @@ onSnapshot(q, (snap) => {
 
             <p>${d.text || ""}</p>
 
-            ${d.image ? `<img src="${d.image}" style="width:100%; border-radius:12px; margin-top:10px;">` : ""}
+            ${d.image ? `<img src="${d.image}" style="width:100%; border-radius:12px;">` : ""}
 
             <button class="like-btn" onclick="likePost('${docu.id}')">
                 💜 ${d.likes || 0}
